@@ -1,14 +1,22 @@
 from pdfrw import PdfReader, PdfWriter, PageMerge
-import sys
-import os
+import sys, os
+from argparse import ArgumentParser
 
-argv = sys.argv[1:]
-file1name, file2name  = argv
-outputFilename = 'overlay.' + os.path.basename(file1name)
+parser = ArgumentParser()
+parser.add_argument('file1')
+parser.add_argument('file2')
+parser.add_argument('-o', dest='output', metavar='output', help='save overlayed pdf there, default is "overlay.<file1>.pdf"')
 
-file1 = PdfReader(file1name)
-file2 = PdfReader(file2name)
-# 2nd option: check both file's pagecount and swap them so the bigger is first(?)
+parsed = parser.parse_args()
+
+try:
+    file1 = PdfReader(parsed.file1)
+    file2 = PdfReader(parsed.file2)
+except:
+    print("Error: specified file doesn't exist.")
+    print("Stopping")
+    exit(1)
+outputFilename = parsed.output or f'overlay.{os.path.basename(parsed.file1)}'
 
 i = 0
 try:
@@ -19,5 +27,10 @@ except IndexError:
     print("Error: files have unequal pagecount")
     print("Stopping.")
     exit(1)
+except:
+    print("Error parsing the file")
+    print("Stopping.")
+    exit(1)
 
 PdfWriter(outputFilename, trailer=file2).write()
+print(f'Successfully merged into "{outputFilename}"')
